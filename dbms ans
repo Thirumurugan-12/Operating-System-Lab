@@ -1,0 +1,221 @@
+1)
+Q.Create the following tables with given attributes having appropriate data type and specify the necessary primary and foreign key constraints: 
+Customer (Custid, Custname, Age, phone) 
+Loan (Loanid, Amount, Custid, EMI) 
+a) List the name of the customers who have taken loan for more than Rs.50,000. 
+b) List the Customer id of those who have no loan. 
+c) List the total count of loan availed. 
+d) List the customer who pays highest EMI.
+CREATE TABLE Customer (Custid INT PRIMARY KEY,Custname VARCHAR(50),Age INT, Phone VARCHAR(15));
+       CREATE TABLE Loan (Loanid INT PRIMARY KEY, Amount INT,Custid INT,EMI INT,FOREIGN KEY                              
+       (Custid) REFERENCES Customer(Custid));
+a)	SELECT Custname FROM Customer WHERE Custid IN (SELECT Custid FROM Loan WHERE Amount > 50000);
+b)	SELECT Custid FROM Customer WHERE Custid NOT IN (SELECT Custid FROM Loan);
+c)	SELECT COUNT(*) AS TotalLoans FROM Loan;
+d)	SELECT Custname FROM Customer WHERE Custid = (SELECT Custid FROM Loan ORDER BY EMI DESC LIMIT 1);
+
+2)
+
+Q. Create the following tables with given attributes having appropriate data type and specify the necessary primary and foreign key constraints: 
+Employee (EmpId, Empname, Sal, Deptno) 
+Dept (Deptno, Dname, Loc,DeptmanagerId) 
+a) List the count of Employees and average salary of each department. 
+b) List the employee name, department name and the salary of all the employees. 
+c) Display the Employee name and the respective department manager name. 
+d) List the departments where the average salary is above 50000.
+CREATE TABLE Employee ( EmpId INT PRIMARY KEY,Empname VARCHAR(50),Sal INT,Deptno INT, FOREIGN KEY (Deptno) REFERENCES Dept(Deptno));
+CREATE TABLE Dept (Deptno INT PRIMARY KEY, Dname VARCHAR(50),Loc VARCHAR(50),DeptmanagerId INT, FOREIGN KEY (DeptmanagerId) REFERENCES Employee(EmpId));
+a)	SELECT Deptno, COUNT(*) AS EmployeeCount, AVG(Sal) AS AverageSalary FROM Employee GROUP BY Deptno;
+b)	SELECT e.Empname, d.Dname, e.Sal FROM Employee e JOIN Dept d ON e.Deptno = d.Deptno;
+c)	SELECT e.Empname AS EmployeeName, d1.Empname AS ManagerName FROM Employee e JOIN Dept d ON e.Deptno = d.Deptno JOIN Employee d1 ON d.DeptmanagerId = d1.EmpId;
+d)	SELECT d.Dname FROM Employee e JOIN Dept d ON e.Deptno = d.Deptno GROUP BY d.Deptno HAVING AVG(e.Sal) > 50000;
+
+3)
+Q. Create the following tables with given attributes having appropriate data type and specify the necessary primary and foreign key constraints: 
+Voter (VoterId, Votername, Gender, Boothid,Checkvote) checkvote is 1(voted) or 0 (not voted) 
+Booth (Boothid, Location,BIncharge ) 
+a) (i)List the count of voters in each Booth (ii) List the count of Male voters voted. 
+b) Display the overall count of voters voted in the election. 
+c) Display the Boothid, Location and count of voters voted. 
+d) Display the overall count of voters voted in the election.
+CREATE TABLE Voter (VoterId INT PRIMARY KEY, Votername VARCHAR(50),Gender VARCHAR(10),Boothid INT, Checkvote INT,FOREIGN KEY (Boothid) REFERENCES Booth(Boothid));
+CREATE TABLE Booth (Boothid INT PRIMARY KEY, Location VARCHAR(100),BIncharge VARCHAR(50));
+a)i) SELECT b.Boothid, b.Location, COUNT(v.VoterId) AS VoterCount FROM Booth b LEFT JOIN Voter v ON b.Boothid = v.Boothid GROUP BY b.Boothid, b.Location;
+a)ii) SELECT COUNT(*) AS MaleVotersVoted FROM Voter WHERE Gender = 'Male' AND Checkvote = 1;
+b) SELECT COUNT(*) AS TotalVotersVoted FROM Voter WHERE Checkvote = 1;
+c) SELECT b.Boothid, b.Location, COUNT(v.VoterId) AS VotersVoted FROM Booth b LEFT JOIN Voter v ON b.Boothid = v.Boothid AND v.Checkvote = 1 GROUP BY b.Boothid, b.Location;
+d) SELECT b.Boothid, b.Location FROM Booth b LEFT JOIN Voter v ON b.Boothid = v.Boothid GROUP BY b.Boothid, b.Location HAVING COUNT(v.VoterId) = 0;
+
+4)
+Q. Create the following tables with given attributes having appropriate data type and specify the necessary primary and foreign key constraints: 
+User (Userid, Name, Dept, Bookid, Accdate) 
+Book (Bookid, Book_name, Author, Publication, Price) 
+a) List the name of the user who had accessed the costliest book. 
+b) List the userid and count of books accessed by the user. 
+c) List the books published by Wiley publisher. 
+d) List the users who have accessed books published by 'Pearson' and have accessed more than 5 books.
+      CREATE TABLE User ( Userid INT PRIMARY KEY,Name VARCHAR(50),Dept VARCHAR(50),Bookid INT,Accdate DATE,
+      FOREIGN KEY (Bookid) REFERENCES Book(Bookid));
+CREATE TABLE Book (Bookid INT PRIMARY KEY, Book_name VARCHAR(100), Author VARCHAR(100),Publication VARCHAR(100),Price INT);
+a)	SELECT u.Name FROM User u JOIN Book b ON u.Bookid = b.Bookid ORDER BY b.Price DESC LIMIT 1;
+b)	SELECT Userid, COUNT(Bookid) AS BookCount FROM User GROUP BY Userid;
+c)	SELECT *FROM Book WHERE Publication = 'Wiley';
+d)	SELECT u.Userid, u.Name FROM User u JOIN Book b ON u.Bookid = b.Bookid WHERE b.Publication = 'Pearson'
+GROUP BY u.Userid, u.Name HAVING COUNT(u.Bookid) > 5;
+
+5)
+Q. Create the following tables with given attributes having appropriate data type and specify the necessary primary and foreign key constraints: 
+Product (Prodid, Prodesc, Price, Stock) 
+Sales (Salesid, Prodid, qty) 
+a) Add a column reorder in Product table having value 50 for all products. 
+b) List the products that are currently out of stock.
+c) Display the total sales amount for each product, assuming each sale is at the listed price
+d) List the products that need to be reordered (i.e., where the current stock is less than or equal to the reorder point).
+CREATE TABLE Product (Prodid INT PRIMARY KEY, Prodesc VARCHAR(100),Price DECIMAL(10, 2),Stock INT, Reorder INT DEFAULT 50);
+CREATE TABLE Sales ( Salesid INT PRIMARY KEY,Prodid INT, Qty INT,FOREIGN KEY (Prodid) REFERENCES Product(Prodid));
+a)ALTER TABLE Product ADD Reorder INT DEFAULT 50;
+b) SELECT *FROM Product WHERE Stock = 0;
+c) SELECT p.Prodid, p.Prodesc, SUM(s.qty * p.Price) AS TotalSalesAmount FROM Product p LEFT JOIN Sales s ON p.Prodid = s.Prodid GROUP BY p.Prodid, p.Prodesc;
+d) SELECT * FROM Product WHERE Stock <= reorder;
+
+6)
+Q.Write a trigger which records the account balance before it is updated 
+SQL> desc prevbal; 
+Name                    Null? Type 
+ACCTNO            NUMBER(6,2) 
+BALANCE          NUMBER(10) 
+
+SQL> select *from acct; 
+ACCTNO NAME        CUR_BAL 
+2345 shalu                      78000 
+4567 padhu                     80000 
+7890 aasmi                     85000 
+8091 sweatha                  83000 
+
+SQL> create or replace trigger t6 before 
+2         insert or update on acct for each row 
+3         begin 
+4         insert into prevbal values(:old.acctno,:old.cur_bal); 
+5         end; 
+6 / 
+Trigger created. 
+ 
+SQL> update acct set cur_bal=cur_bal+2000 where name='aasmi'; 
+1 row updated. 
+
+SQL> select *from prevbal; 
+ACCTNO    BALANCE 
+7890             85000
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+7)
+
+Q.Write a trigger which counts the number of students who has secured marks<50 
+SQL> create table failcount(counter int); 
+SQL> select *from mark; 
+ 
+REGNO        MARKS 
+28                       99 
+45                       89 
+21                       95 
+8                         99
+
+SQL> create or replace trigger t25 after 
+2     insert or update on mark for each row 
+3     when(new.marks<50) 
+4     begin 
+5     update failcount set counter=counter+1; 
+6     end; 
+7 / 
+Trigger created. 
+
+SQL> insert into failcount values(0); 
+1 row created. 
+
+SQL> insert into mark values(4,45); 
+1 row created. 
+
+SQL> select *from failcount; 
+COUNTER 
+1
+
+
+8)
+
+
+
+Q)Program:write a pl/sql program to swap two numbers by taking third variable
+
+declare
+a number(10); b number(10); c number(10); begin
+dbms_output.put_line('THE PREV VALUES OF A AND B WERE'); dbms_output.put_line(a);
+dbms_output.put_line(b); a:=&a;
+b:=&b;
+c:=a;
+a:=b;
+b:=c;
+dbms_output.put_line('THE VALUES OF A AND B ARE'); dbms_output.put_line(a);
+dbms_output.put_line(b); end;
+
+OUTPUT:
+SQL> @ SWAPPING2.SQL 19 /
+Enter value for a: 5 old 6: a:=&a; new 6: a:=5; Enter value for b: 3 old 7: b:=&b; new 7: b:=3;
+THE PREV VALUES OF A AND B WERE 5 3
+THE VALUES OF A AND B ARE 3 5
+PL/SQL procedure successfully completed.
+
+
+9)
+
+Q)Write a pl/sql program to find the largest of two numbers.
+
+declare
+a number; b number; begin a:=&a; b:=&b;
+
+if a=b then
+dbms_output.put_line('BOTH ARE EQUAL'); elsif a>b then
+dbms_output.put_line('A IS GREATER'); else
+dbms_output.put_line('B IS GREATER'); end if;
+end;
+
+OUTPUT:
+
+SQL> @ GREATESTOF2.sql 13 /
+Enter value for a: 5 old 5: a:=&a; new 5: a:=5; Enter value for b: 2 old 6: b:=&b; new 6: b:=2;
+A IS GREATER
+
+PL/SQL procedure successfully completed.
+
+
+
+
+10)
+
+Q)Write a pl/sql program to find the factorial of a given number
+
+declare
+
+n number;
+f number:=1; begin n:=&n;
+
+for i in 1..n loop f:=f*i; end loop;
+dbms_output.put_line('the factorial is'|| f); end;
+
+
+OUTPUT:
+
+SQL> @ FACTORIAL.sql 12 /
+Enter value for n: 5 old 5: n:=&n;
